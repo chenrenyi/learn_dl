@@ -2,6 +2,5 @@
 venv
 pytorch/classifer/data
 pytorch/data
-*.pth
 *.DS_Store
 *.pyc
