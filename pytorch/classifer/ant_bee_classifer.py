@@ -113,13 +113,14 @@ def visualize_model(model, num_images=6):
             labels = labels.to(device)
 
             outputs = model(inputs)
-            _, prebs = torch.max(outputs, labels)
+            _, preds = torch.max(outputs, 1)
 
-            for j in inputs:
+            for j in range(inputs.size()[0]):
                 image_num += 1
                 ax = plt.subplot(num_images // 2, 2, image_num)
                 ax.axis('off')
-                ax.title('predicted {}'.format(class_names[prebs[j]]))
+                print(preds[j], class_names)
+                ax.set_title('predicted {}'.format(class_names[preds[j]]))
                 imshow(inputs.cpu().data[j])
 
                 if image_num == num_images:
@@ -171,4 +172,9 @@ optimizer_conv = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
 # 进行实际训练
-model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler)
+model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=1)
+
+# 展示效果
+visualize_model(model_conv)
+plt.ioff()
+plt.show()
