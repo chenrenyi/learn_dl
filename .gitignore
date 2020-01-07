@@ -1,5 +1,7 @@
 .idea
 venv
 pytorch/classifer/data
-*.pth
 pytorch/data
+*.pth
+*.DS_Store
+*.pyc
