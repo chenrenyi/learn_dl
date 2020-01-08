@@ -100,6 +100,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
 
 def visualize_model(model, num_images=6):
+    """展示模型效果"""
     # 保存训练状态，然后置为计算状态
     was_training = model.training
     model.eval()
@@ -119,7 +120,6 @@ def visualize_model(model, num_images=6):
                 image_num += 1
                 ax = plt.subplot(num_images // 2, 2, image_num)
                 ax.axis('off')
-                print(preds[j], class_names)
                 ax.set_title('predicted {}'.format(class_names[preds[j]]))
                 imshow(inputs.cpu().data[j])
 
@@ -139,14 +139,15 @@ data_transforms = {
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
     'val': transforms.Compose([
-        transforms.RandomResizedCrop(256),
-        transforms.CenterCrop(224),
+        transforms.Resize(256),
+        transforms.CenterCrop(256),
         transforms.ToTensor(),
         transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
     ]),
 }
 
-data_dir = 'data/hymenoptera_data'
+# data_dir = 'data/hymenoptera_data'
+data_dir = '../data/dog_cats'
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=0)
                for x in ['train', 'val']}
@@ -156,7 +157,7 @@ class_names = image_datasets['train'].classes
 # 展示一些图片
 inputs, classes = next(iter(dataloaders['train']))
 out = torchvision.utils.make_grid(inputs)
-imshow(out, title=[class_names[x] for x in classes])
+# imshow(out, title=[class_names[x] for x in classes])
 
 # 加载预训练模型
 model_ft = models.resnet18(pretrained=True)
@@ -168,13 +169,17 @@ model_ft = model_ft.to(device)
 
 # 定义误差函数，梯度下降算法，学习率改进策略
 criterion = nn.CrossEntropyLoss()
-optimizer_conv = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+optimizer_conv = optim.SGD(model_ft.fc.parameters(), lr=0.001, momentum=0.9)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
 # 进行实际训练
-model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=1)
+# model_ft.load_state_dict(torch.load('./dog_cats_model.pth'))
+model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=2)
+torch.save(model_ft.state_dict(), './dog_cats_model.pth')
+
+# print(next(iter(dataloaders['val'])))
 
 # 展示效果
-visualize_model(model_conv)
+visualize_model(model_ft)
 plt.ioff()
 plt.show()
