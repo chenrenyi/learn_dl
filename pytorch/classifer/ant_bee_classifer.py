@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import time
 import os
 import copy
+from PIL import Image
+import math
 
 # interactive mode
 plt.ion()
@@ -99,7 +101,7 @@ def train_model(model, criterion, optimizer, scheduler=None, num_epochs=25):
     return model
 
 
-def visualize_model(model, num_images=6):
+def visualize_model(model, dataloader, num_images=6):
     """展示模型效果"""
     # 保存训练状态，然后置为计算状态
     was_training = model.training
@@ -109,7 +111,7 @@ def visualize_model(model, num_images=6):
     fig = plt.figure()
 
     with torch.no_grad():
-        for i, (inputs, labels) in enumerate(dataloaders['val']):
+        for i, (inputs, labels) in enumerate(dataloader):
             inputs = inputs.to(device)
             labels = labels.to(device)
 
@@ -118,7 +120,7 @@ def visualize_model(model, num_images=6):
 
             for j in range(inputs.size()[0]):
                 image_num += 1
-                ax = plt.subplot(num_images // 2, 2, image_num)
+                ax = plt.subplot(math.ceil(num_images / 2), 2, image_num)
                 ax.axis('off')
                 ax.set_title('predicted {}'.format(class_names[preds[j]]))
                 imshow(inputs.cpu().data[j])
@@ -128,6 +130,14 @@ def visualize_model(model, num_images=6):
                     return
 
         model.train(mode=was_training)
+
+
+def predicate(model, img_path):
+    image = Image.open(img_path)
+    image = data_transforms['val'](image)
+    output = model(torch.tensor([image]))
+    _, preds = torch.max(output)
+    return class_names[preds]
 
 
 # 加载图片
@@ -151,6 +161,11 @@ data_dir = '../data/dog_cats'
 image_datasets = {x: datasets.ImageFolder(os.path.join(data_dir, x), data_transforms[x]) for x in ['train', 'val']}
 dataloaders = {x: torch.utils.data.DataLoader(image_datasets[x], batch_size=4, shuffle=True, num_workers=0)
                for x in ['train', 'val']}
+
+# 自定义的图片
+mine_image_dataset = datasets.ImageFolder('../data/mine', data_transforms['val'])
+mine_dataloader = torch.utils.data.DataLoader(mine_image_dataset, batch_size=4, shuffle=False, num_workers=0)
+
 dataset_sizes = {x: len(image_datasets[x]) for x in ['train', 'val']}
 class_names = image_datasets['train'].classes
 
@@ -181,6 +196,11 @@ torch.save(model_ft.state_dict(), './dog_cats_model.pth')
 # print(next(iter(dataloaders['val'])))
 
 # 展示效果
-visualize_model(model_ft)
+visualize_model(model_ft, dataloaders['val'])
+# visualize_model(model_ft, mine_dataloader, 6)
+
+# 展示特定图片
+# print(predicate(model_ft, '../data/mine/none/image001.jpg'))
+
 plt.ioff()
 plt.show()
