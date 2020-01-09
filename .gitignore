@@ -4,3 +4,4 @@ pytorch/classifer/data
 pytorch/data
 *.DS_Store
 *.pyc
+*.pth
