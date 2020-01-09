@@ -31,7 +31,7 @@ def imshow(inp, title=None):
     plt.pause(0.001)  # pause a bit so that plots are updated
 
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler=None, num_epochs=25):
     """common model train"""
     since = time.time()
 
@@ -75,7 +75,7 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                 running_corrects += torch.sum(preds == labels.data)
 
             # change learning rate after one iter on whole data
-            if phase == 'train':
+            if phase == 'train' and scheduler is not None:
                 scheduler.step()
 
             epoch_loss = running_loss / dataset_sizes[phase]
@@ -170,11 +170,12 @@ model_ft = model_ft.to(device)
 # 定义误差函数，梯度下降算法，学习率改进策略
 criterion = nn.CrossEntropyLoss()
 optimizer_conv = optim.SGD(model_ft.fc.parameters(), lr=0.001, momentum=0.9)
+# optimizer_conv = optim.Adam(model_ft.fc.parameters(), lr=0.1)
 exp_lr_scheduler = lr_scheduler.StepLR(optimizer_conv, step_size=7, gamma=0.1)
 
 # 进行实际训练
 # model_ft.load_state_dict(torch.load('./dog_cats_model.pth'))
-model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=2)
+model_conv = train_model(model_ft, criterion, optimizer_conv, exp_lr_scheduler, num_epochs=5)
 torch.save(model_ft.state_dict(), './dog_cats_model.pth')
 
 # print(next(iter(dataloaders['val'])))
